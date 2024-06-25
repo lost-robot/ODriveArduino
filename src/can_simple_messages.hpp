@@ -880,3 +880,66 @@ struct Enter_DFU_Mode_msg_t final {
     
 };
 
+
+
+
+struct Disable_CAN_msg_t final {
+
+    constexpr Disable_CAN_msg_t() = default;
+
+#ifdef ODRIVE_CAN_MSG_TYPE
+    Disable_CAN_msg_t(const TBoard::TCanIntf::TMsg& msg) {
+        decode_msg(msg);
+    }
+
+    void encode_msg(TBoard::TCanIntf::TMsg& msg) {
+        encode_buf(can_msg_get_payload(msg).data());
+    }
+
+    void decode_msg(const TBoard::TCanIntf::TMsg& msg) {
+        decode_buf(can_msg_get_payload(msg).data());
+    }
+#endif
+
+    void encode_buf(uint8_t* buf) const {
+        buf[0] = static_cast<uint8_t>(Enable);
+    }
+
+    void decode_buf(const uint8_t* buf) {
+        Enable = static_cast<bool>(buf[0]);
+    }
+
+    static const uint8_t cmd_id = 0x01E;
+    static const uint8_t msg_length = 1; // Adjusted to 1 byte to accommodate the bool
+
+    bool Enable = false;
+};
+
+
+
+struct Save_ODrive_msg_t final {
+    constexpr Save_ODrive_msg_t() = default;
+
+#ifdef ODRIVE_CAN_MSG_TYPE
+    Save_ODrive_msg_t(const TBoard::TCanIntf::TMsg& msg) {
+        decode_msg(msg);
+    }
+
+    void encode_msg(TBoard::TCanIntf::TMsg& msg) {
+        encode_buf(can_msg_get_payload(msg).data());
+    }
+
+    void decode_msg(const TBoard::TCanIntf::TMsg& msg) {
+        decode_buf(can_msg_get_payload(msg).data());
+    }
+#endif
+
+    void encode_buf(uint8_t* buf) const {
+    }
+
+    void decode_buf(const uint8_t* buf) {
+    }
+
+    static const uint8_t cmd_id = 0x01F;
+    static const uint8_t msg_length = 0;
+};

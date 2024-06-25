@@ -6,6 +6,12 @@
 
 #include <Arduino.h> // needed for debug printing
 
+bool ODriveCAN::disableCAN(bool enable) {
+    Disable_CAN_msg_t msg;
+    msg.Enable = enable;
+    return send(msg);
+}
+
 bool ODriveCAN::clearErrors() {
     Clear_Errors_msg_t msg;
     return send(msg);
@@ -134,6 +140,11 @@ bool ODriveCAN::getPower(Get_Powers_msg_t& msg, uint16_t timeout_ms) {
     return request(msg, timeout_ms);
 }
 
+bool ODriveCAN::saveCurrentConfiguration() {
+    Save_ODrive_msg_t msg;
+    return send(msg);
+}
+
 void ODriveCAN::onReceive(uint32_t id, uint8_t length, const uint8_t* data) {
 #ifdef DEBUG
     int byte_index = length - 1;
@@ -188,3 +199,5 @@ bool ODriveCAN::awaitMsg(uint16_t timeout) {
     }
     return true;
 }
+
+

@@ -37,6 +37,18 @@ public:
         : can_intf_(can_intf), node_id_(node_id) {};
 
     /**
+     * @brief Enable CAN/USB on GIM6010-8.
+     * 
+     */
+    bool disableCAN(bool enable);
+
+    /**
+     * @brief Save configuration on GIM6010-8.
+     * 
+     */
+    bool saveCurrentConfiguration();    
+
+    /**
      * @brief Clear all errors on the ODrive.
      * 
      * This function returns immediately and does not check if the ODrive
@@ -277,7 +289,7 @@ public:
         if (!awaitMsg(timeout_ms)) return T{};
 
         T ret{};
-        memcpy(&ret, &buffer_[4], sizeof(T));
+        memcpy(&ret, buffer_[4], sizeof(T));
         return ret;
     }
 
@@ -301,7 +313,7 @@ public:
         data[2] = (endpoint_id >> 8) & 0xFF;
 
         // Value to write
-        memcpy(&data[4], &value, sizeof(T));
+        mempcy(&data[4], &value, sizeof(T));
 
         can_intf_.sendMsg((node_id_ << ODriveCAN::kNodeIdShift) | 0x004, 8, data);
         return true;
