@@ -145,47 +145,109 @@ bool ODriveCAN::saveCurrentConfiguration() {
     return send(msg);
 }
 
+// void ODriveCAN::onReceive(uint32_t id, uint8_t length, const uint8_t* data) {
+// #ifdef DEBUG
+//     int byte_index = length - 1;
+//     Serial.println("received:");
+//     Serial.print("  id: 0x");
+//     Serial.println(id, HEX);
+//     Serial.print("  data: 0x");
+//     while (byte_index >= 0)
+//         Serial.print(msg.data[byte_index--], HEX);
+//     Serial.println("");
+// #endif // DEBUG
+//     if (node_id_ != (id >> ODriveCAN::kNodeIdShift))
+//         return;
+//     switch (id & ODriveCAN::kCmdIdBits) {
+//         case Get_Encoder_Estimates_msg_t::cmd_id: {
+//             Get_Encoder_Estimates_msg_t estimates;
+//             estimates.decode_buf(data);
+//             if (feedback_callback_)
+//                 feedback_callback_(estimates, feedback_user_data_);
+//             break;
+//         }
+//         case Heartbeat_msg_t::cmd_id: {
+//             Heartbeat_msg_t status;
+//             status.decode_buf(data);
+//             if (axis_state_callback_ != nullptr)
+//                 axis_state_callback_(status, axis_state_user_data_);
+//             else
+//                 Serial.println("missing callback");
+//             break;
+//         }
+//         default: {
+//             if (requested_msg_id_ == REQUEST_PENDING)
+//                 return;
+// #ifdef DEBUG
+//             Serial.print("waiting for: 0x");
+//             Serial.println(requested_msg_id_, HEX);
+// #endif // DEBUG
+//             if ((id & ODriveCAN::kCmdIdBits) != requested_msg_id_)
+//                 return;
+//             memcpy(buffer_, data, length);
+//             requested_msg_id_ = REQUEST_PENDING;
+//         }
+//     }
+// }
+
 void ODriveCAN::onReceive(uint32_t id, uint8_t length, const uint8_t* data) {
 #ifdef DEBUG
-    int byte_index = length - 1;
     Serial.println("received:");
     Serial.print("  id: 0x");
     Serial.println(id, HEX);
     Serial.print("  data: 0x");
-    while (byte_index >= 0)
-        Serial.print(msg.data[byte_index--], HEX);
+    for (int byte_index = length - 1; byte_index >= 0; --byte_index) {
+        Serial.print(data[byte_index], HEX);
+        Serial.print(" ");
+    }
     Serial.println("");
 #endif // DEBUG
-    if (node_id_ != (id >> ODriveCAN::kNodeIdShift))
+
+    // Check if the message is for this node
+    if (node_id_ != (id >> ODriveCAN::kNodeIdShift)) {
         return;
+    }
+
+    // Handle specific messages based on command ID
     switch (id & ODriveCAN::kCmdIdBits) {
         case Get_Encoder_Estimates_msg_t::cmd_id: {
             Get_Encoder_Estimates_msg_t estimates;
             estimates.decode_buf(data);
-            if (feedback_callback_)
+            if (feedback_callback_) {
                 feedback_callback_(estimates, feedback_user_data_);
+            }
             break;
         }
         case Heartbeat_msg_t::cmd_id: {
             Heartbeat_msg_t status;
             status.decode_buf(data);
-            if (axis_state_callback_ != nullptr)
+            if (axis_state_callback_ != nullptr) {
                 axis_state_callback_(status, axis_state_user_data_);
-            else
+            } else {
+#ifdef DEBUG
                 Serial.println("missing callback");
+#endif // DEBUG
+            }
             break;
         }
         default: {
-            if (requested_msg_id_ == REQUEST_PENDING)
+            // Handle pending request
+            if (requested_msg_id_ == REQUEST_PENDING) {
                 return;
+            }
 #ifdef DEBUG
             Serial.print("waiting for: 0x");
             Serial.println(requested_msg_id_, HEX);
 #endif // DEBUG
-            if ((id & ODriveCAN::kCmdIdBits) != requested_msg_id_)
+            if ((id & ODriveCAN::kCmdIdBits) != requested_msg_id_) {
                 return;
-            memcpy(buffer_, data, length);
-            requested_msg_id_ = REQUEST_PENDING;
+            }
+            // Ensure length does not exceed buffer size
+            if (length <= sizeof(buffer_)) {
+                memcpy(buffer_, data, length);
+                requested_msg_id_ = REQUEST_PENDING;
+            }
+            break;
         }
     }
 }

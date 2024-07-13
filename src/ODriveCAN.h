@@ -240,11 +240,13 @@ public:
     template<typename T>
     bool request(T& msg, uint16_t timeout_ms = 10) {
         requested_msg_id_ = msg.cmd_id;
-        can_intf_.sendMsg(
-            (node_id_ << ODriveCAN::kNodeIdShift) | msg.cmd_id,
-            0, // no data
-            nullptr // RTR=1
-        );
+        // can_intf_.sendMsg(
+        //     (node_id_ << ODriveCAN::kNodeIdShift) | msg.cmd_id,
+        //     0, // no data
+        //     nullptr // RTR=1
+        // );
+        uint8_t data[0] = {};
+        can_intf_.sendMsg((node_id_ << ODriveCAN::kNodeIdShift) | msg.cmd_id, 0, data); // RTR=1
         if (!awaitMsg(timeout_ms)) return false;
         msg.decode_buf(buffer_);
         return true;
@@ -289,7 +291,8 @@ public:
         if (!awaitMsg(timeout_ms)) return T{};
 
         T ret{};
-        memcpy(&ret, buffer_[4], sizeof(T));
+        // memcpy(&ret, buffer_[4], sizeof(T));
+        memcpy(&ret, buffer_ + 4, sizeof(T));
         return ret;
     }
 
@@ -313,7 +316,7 @@ public:
         data[2] = (endpoint_id >> 8) & 0xFF;
 
         // Value to write
-        mempcy(&data[4], &value, sizeof(T));
+        memcpy(&data[4], &value, sizeof(T));
 
         can_intf_.sendMsg((node_id_ << ODriveCAN::kNodeIdShift) | 0x004, 8, data);
         return true;
